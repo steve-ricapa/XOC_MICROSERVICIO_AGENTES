@@ -1,6 +1,7 @@
---pre
 azure-functions
 requests
+azure-identity
+azure-core
 agent-framework-core
 agent-framework-azure
 agent-framework-azure-ai
