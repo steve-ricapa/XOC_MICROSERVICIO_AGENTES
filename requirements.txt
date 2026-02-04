@@ -1,0 +1,6 @@
+--pre
+azure-functions
+requests
+agent-framework-core
+agent-framework-azure
+agent-framework-azure-ai
