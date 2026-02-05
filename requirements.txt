@@ -1,7 +1,8 @@
-azure-functions
+azure-functions>=1.15.0
+agent-framework==1.0.0b260130
 requests
 azure-identity
 azure-core
-agent-framework-core
-agent-framework-azure
-agent-framework-azure-ai
+openai
+grpcio>=1.66.0
+grpcio-tools>=1.66.0

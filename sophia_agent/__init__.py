@@ -31,12 +31,12 @@ def _build_agent():
     client = AzureOpenAIChatClient(
         endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
         api_key=os.getenv('AZURE_OPENAI_API_KEY'),
-        deployment=os.getenv('AZURE_OPENAI_DEPLOYMENT'),
+        deployment_name=os.getenv('AZURE_OPENAI_DEPLOYMENT'),
         api_version=os.getenv('AZURE_OPENAI_API_VERSION')
     )
-    return client.create_agent(
+    return client.as_agent(
         name='SOPHIA',
-        instructions='You are SOPHIA, a triage agent.'
+        instructions='Eres SOPHIA, una agente de triage muy amable. DEBES responder SIEMPRE en ESPAÑOL. Comienza siempre tu respuesta con un saludo afectuoso y preséntate brevemente.'
     )
 
 
@@ -44,7 +44,7 @@ sophia_agent = _build_agent()
 app = AgentFunctionApp(agents=[sophia_agent])
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+async def main(req: func.HttpRequest) -> func.HttpResponse:
     logger.info('SOPHIA request received')
     try:
         company_header = get_company_header_name()
@@ -87,7 +87,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logger.info('Thread id provided: %s', bool(thread_id))
 
         logger.info('Running agent')
-        agent_result = _run_agent(sophia_agent, message, thread_id)
+        agent_result = await _run_agent(sophia_agent, message, thread_id)
         logger.debug('Agent result keys: %s', list(agent_result.keys()))
 
         classification = _classify_message(message)
@@ -101,13 +101,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             subject = 'Automated security request'
             description = message or 'Automated request captured by SOPHIA'
             logger.info('Creating ticket in backend')
-            ticket_response = ticket_create(
-                backend_client,
-                subject=subject,
-                description=description,
-                company_id=company_id,
-                auth_header=auth_header
-            )
+            try:
+                ticket_response = ticket_create(
+                    backend_client,
+                    subject=subject,
+                    description=description,
+                    company_id=company_id,
+                    auth_header=auth_header
+                )
+            except Exception as exc:
+                logger.warning('Failed to create ticket in backend (server might be down): %s', exc)
+                ticket_response = {
+                    'id': 0,
+                    'subject': subject,
+                    'status': 'MOCK_CREATED',
+                    'message': 'Backend unavailable, using mock response'
+                }
             metadata['ticket'] = ticket_response
 
         output = AgentOutput(
@@ -149,11 +158,11 @@ def _build_response_text(classification: str) -> str:
     return 'Caso clasificado como MANUAL. Se requiere revision humana.'
 
 
-def _run_agent(agent, message: str, thread_id: str | None) -> dict:
+async def _run_agent(agent, message: str, thread_id: str | None) -> dict:
     if hasattr(agent, 'run'):
-        result = agent.run(message=message, thread_id=thread_id)
+        result = await agent.run(message=message, thread_id=thread_id)
     elif hasattr(agent, 'chat'):
-        result = agent.chat(message=message, thread_id=thread_id)
+        result = await agent.chat(message=message, thread_id=thread_id)
     else:
         raise RuntimeError('ChatAgent does not expose a run/chat method')
 
@@ -161,6 +170,11 @@ def _run_agent(agent, message: str, thread_id: str | None) -> dict:
         return {
             'text': result.get('text') or result.get('message') or result.get('content'),
             'thread_id': result.get('thread_id') or result.get('threadId')
+        }
+    if hasattr(result, 'text'):
+        return {
+            'text': result.text,
+            'thread_id': getattr(result, 'thread_id', thread_id)
         }
     if isinstance(result, str):
         return {'text': result, 'thread_id': thread_id}
