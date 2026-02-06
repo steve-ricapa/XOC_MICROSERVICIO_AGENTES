@@ -1,12 +1,6 @@
 import azure.functions as func
 import logging
-import os
-import sys
 
-# Asegurar que la raíz esté en el path para los imports de 'shared' y 'domain'
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-# Importar las lógicas de los agentes
 from sophia_agent import main as sophia_main
 from victor_agent import main as victor_main
 

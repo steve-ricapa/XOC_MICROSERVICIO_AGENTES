@@ -3,8 +3,9 @@
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "python",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "BACKEND_URL": "http://localhost:5000/api",
+    "BACKEND_URL": "https://your-backend-domain/api",
     "BACKEND_TIMEOUT_SECONDS": "10",
-    "XCOMPANY_HEADER": "X-Company-Id"
+    "XCOMPANY_HEADER": "X-Company-Id",
+    "AGENT_ACCESS_KEY": "set-in-azure-or-local"
   }
 }

@@ -3,8 +3,8 @@
 from shared.backend_client import BackendClient
 
 
-def ticket_create(client: BackendClient, subject: str, description: str, company_id: str, auth_header: str | None) -> dict:
-    return client.ticket_create(company_id=company_id, subject=subject, description=description, auth_header=auth_header)
+def ticket_create(client: BackendClient, subject: str, description: str, company_id: str, status: str | None, auth_header: str | None) -> dict:
+    return client.ticket_create(company_id=company_id, subject=subject, description=description, status=status, auth_header=auth_header)
 
 
 def ticket_get(client: BackendClient, ticket_id: int, company_id: str, auth_header: str | None) -> dict:

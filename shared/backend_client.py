@@ -11,14 +11,16 @@ class BackendClient:
         self.base_url = (base_url or config.get_backend_url()).rstrip('/')
         self.timeout = timeout if timeout is not None else config.get_backend_timeout()
 
-    def ticket_create(self, company_id: str, subject: str, description: str, auth_header: Optional[str] = None) -> dict:
+    def ticket_create(self, company_id: str, subject: str, description: str, status: Optional[str] = None, auth_header: Optional[str] = None) -> dict:
         payload = {
             'subject': subject,
             'description': description
         }
+        if status:
+            payload['status'] = status
         return self._request(
             'post',
-            '/tickets',
+            '/tickets/agent-create',
             company_id=company_id,
             json=payload,
             auth_header=auth_header
